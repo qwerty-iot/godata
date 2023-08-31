@@ -83,7 +83,11 @@ func (m *Model) ToXml() ([]byte, error) {
 }
 
 func (m *Model) ToSimpleJson(scope string) ([]byte, error) {
-	ret := result.New(m.context + "/$metadata")
+	context := m.context + "/$metadata"
+	if len(scope) != 0 {
+		context = m.context + "/" + scope + "/$metadata"
+	}
+	ret := result.New(context)
 	for _, ec := range m.DataServices.Schema.EntityContainer {
 		for _, es := range ec.EntitySet {
 			ret.Add(es.ToObject())

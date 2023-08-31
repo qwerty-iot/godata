@@ -5,6 +5,7 @@ type EntityTypeProperty struct {
 	Type      EdmType `xml:"Type,attr"`
 	Nullable  string  `xml:"Nullable,attr,omitempty"`
 	MaxLength string  `xml:"MaxLength,attr,omitempty"`
+	Partner   string  `xml:"Partner,attr,omitempty"`
 }
 
 type EntityType struct {
@@ -42,15 +43,16 @@ func (o *EntityType) AddProperty(name string, edmType EdmType, options *Options)
 	return
 }
 
-func (o *EntityType) AddNavigationProperty(name string, entity string, collection bool) {
+func (o *EntityType) AddNavigationProperty(name string, entity string, collection bool, partner string) {
 	if collection {
 		entity = "Collection(" + o.m.DataServices.Schema.Namespace + "." + entity + ")"
 	} else {
 		entity = o.m.DataServices.Schema.Namespace + "." + entity
 	}
 	o.NavigationProperty = append(o.NavigationProperty, &EntityTypeProperty{
-		Name: name,
-		Type: EdmType(entity),
+		Name:    name,
+		Type:    EdmType(entity),
+		Partner: partner,
 	})
 	return
 }

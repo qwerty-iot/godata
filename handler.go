@@ -12,17 +12,19 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logDebug(r, nil, "request received.")
 	var err error
 
-	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) == 1 {
+	path := strings.Trim(r.URL.Path, "/")
+	pathParts := strings.Split(path, "/")
+	if len(pathParts) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write(nil)
 		return
-	} else if len(pathParts) == 2 {
-		scope := pathParts[1]
+	} else if len(pathParts) == 1 {
+		scope := pathParts[0]
 		w.Header().Set("Content-Type", "application/json")
 		w.Header().Set("Odata-Version", "4.0")
 		w.WriteHeader(200)
 		model := s.Model
+		var b []byte
 		if model == nil {
 			model, err = s.ModelHandler.Metadata(s, scope)
 			if err != nil {
@@ -30,30 +32,16 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				_, _ = w.Write([]byte(err.Error()))
 				return
 			}
+			b, _ = model.ToSimpleJson("")
+		} else {
+			b, _ = model.ToSimpleJson(scope)
 		}
-		b, _ := model.ToSimpleJson(scope)
 		_, _ = w.Write(b)
 		return
 	} else {
-		scope := pathParts[1]
-		entity := pathParts[2]
-		if len(entity) == 0 {
-			w.Header().Set("Content-Type", "application/json")
-			w.Header().Set("Odata-Version", "4.0")
-			w.WriteHeader(200)
-			model := s.Model
-			if model == nil {
-				model, err = s.ModelHandler.Metadata(s, scope)
-				if err != nil {
-					w.WriteHeader(http.StatusInternalServerError)
-					_, _ = w.Write([]byte(err.Error()))
-					return
-				}
-			}
-			b, _ := model.ToSimpleJson(scope)
-			_, _ = w.Write(b)
-
-		} else if entity == "$metadata" {
+		scope := pathParts[0]
+		entity := pathParts[1]
+		if entity == "$metadata" {
 			w.Header().Set("Content-Type", "application/xml")
 			w.Header().Set("Odata-Version", "4.0")
 			w.WriteHeader(200)
